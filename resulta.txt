@@ -1,0 +1,226 @@
+<?
+main();
+
+function init() { 
+
+print "\n*** Resuffling Deck *** \n\n"; 
+
+for ($y = 0; $y < 4; $y++) { 
+
+    switch($y) { 
+
+        case 0:  
+            $suit = 'C';  
+            break; 
+        case 1:  
+            $suit = 'S';  
+            break; 
+        case 2:  
+            $suit = 'H';  
+            break; 
+        case 3:  
+            $suit = 'D';  
+            break; 
+
+    }                 
+
+    for ($i = 1; $i <= 13; $i++) { 
+
+        if ($i <= 10) $deck[$suit][$i] = $i; 
+
+        switch($i) { 
+            case 1: 
+                $deck[$suit][$i] = 'A'; 
+                break; 
+            case 11: 
+                $deck[$suit][$i] = 'J'; 
+                break; 
+            case 12: 
+                $deck[$suit][$i] = 'Q'; 
+                break; 
+            case 13: 
+                $deck[$suit][$i] = 'K'; 
+                break; 
+        } 
+
+    } 
+
+} 
+
+srand ((double) microtime() * 1000000); 
+
+  return $deck; 
+} 
+
+function draw() { 
+
+    global $deck; 
+
+    static $usedcards = 0; 
+
+    if ($usedcards >= 52) { 
+
+        $deck = init(); 
+        $usedcards = 0; 
+    } 
+
+    $face = array_rand($deck); 
+    $id = array_rand($deck[$face]); 
+
+
+    $val = ($id >= 10) ? 10 : $id; 
+    $result = array('card'=>$deck[$face][$id].' '.$face,'val'=>$val); 
+
+    unset($deck[$face][$id]); 
+    if (count($deck[$face]) < 1) { 
+        unset($deck[$face]); 
+        } 
+
+    $usedcards++; 
+    return $result;     
+} 
+
+function hand_value($hand) { 
+
+$result = 0;
+$aces = 0;
+
+foreach ($hand as $val) { 
+// $aces = "0";
+
+    if ($val['val'] != 1) { 
+        $result += $val['val']; 
+    } else { 
+        $aces++; 
+    } 
+} 
+
+for ($i = 0; $i < $aces; $i++) { 
+
+    $result += (($result + 11) > 21) ? 1 : 11; 
+
+} 
+
+return $result; 
+
+} 
+
+function show_cards($dealer, $player, $showdealer = false) { 
+
+    print "Dealer has: "; 
+
+    if ($showdealer) { 
+
+        foreach ($dealer as $val) 
+            print "[{$val['card']}] "; 
+
+        print " (".hand_value($dealer).")"; 
+
+    } else { 
+
+        print "[{$dealer[0]['card']}] [ # ]  (?)"; 
+
+    } 
+
+    print "\nPlayer has: "; 
+
+    foreach ($player as $val)                  
+        print "[{$val['card']}] ";         
+
+
+    print " (".hand_value($player).")"; 
+
+}
+
+function new_hand($dealer, $player) 
+    { 
+        print "\nDealing a new hand....\n"; 
+        $dealer = array(); 
+        $player = array(); 
+        $dealer[] = draw(); 
+        $player[] = draw(); 
+        $dealer[] = draw(); 
+        $player[] = draw(); 
+
+if ((hand_value($player) == 21) &&  
+     (hand_value($dealer) == 21)) { 
+
+    show_cards($dealer, $player, true); 
+    print"\n\nBoth Players have BlackJack!\n"; 
+    new_hand(&$dealer, &$player); 
+    return;     
+} 
+
+if (hand_value($player) == 21) { 
+    show_cards($dealer, $player, true); 
+    print "\n\nPlayer has BlackJack!\n"; 
+    new_hand(&$dealer, &$player); 
+} else if (hand_value($dealer) == 21) { 
+    show_cards($dealer, $player,true); 
+    print "\n\nDealer has BlackJack!\n"; 
+    new_hand(&$dealer, &$player); 
+} else { 
+    show_cards($dealer, $player); 
+} 
+} 
+
+
+function main() 
+{ 
+    global $deck;  
+
+    $deck = init(); 
+    $command = 'n'; 
+
+	while (TRUE) { 
+        switch ($command) { 
+
+            case 'q':             
+                print "\n\nThanks for playing!\n"; 
+                exit; 
+                break; 
+
+	case 's': 
+                while (hand_value($dealer) < 16) { 
+                    $dealer[] = draw(); 
+                } 
+                show_cards($dealer, $player, true); 
+
+                if ((hand_value($dealer) > hand_value($player)) && 
+                    (hand_value($dealer) <= 21)) { 
+                    print "\n\nDealer Wins!\n"; 
+                } else if (hand_value($dealer) == hand_value($player)) { 
+                    print "\n\nPush Hand.\n"; 
+                } else { 
+                    print "\n\nPlayer Wins!\n"; 
+                } 
+                new_hand(&$dealer, &$player); 
+                break; 
+
+case 'h': 
+                $player[] = draw(); 
+
+                if (hand_value($player) > 21) { 
+                    show_cards($dealer, $player, TRUE); 
+                    print "\n\nPlayer Busts!\n"; 
+                    new_hand(&$dealer, &$player); 
+                } else { 
+                    show_cards($dealer, $player); 
+                } 
+                break; 
+
+case 'n': 
+                    new_hand(&$dealer, &$player); 
+                    break; 
+
+            default: 
+                show_cards($dealer, $player); 
+        } 
+
+        print "\n> "; 
+        $command = getInput(2);         
+
+    } /* end of infinite while */ 
+} /* end of main() */ 
+
+?>
